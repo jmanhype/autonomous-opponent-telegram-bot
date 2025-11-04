@@ -13,9 +13,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle the /start command.
-  
+
   Sends a welcome message to new users.
   """
+  @spec handle({:command, String.t(), any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:command, "start", _msg}, context) do
     chat_id = get_chat_id(context)
     Logger.info("Received /start command from chat_id: #{chat_id}")
@@ -38,9 +39,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle the /help command.
-  
+
   Shows available commands and usage information.
   """
+  @spec handle({:command, String.t(), any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:command, "help", _msg}, context) do
     chat_id = get_chat_id(context)
     Logger.info("Received /help command from chat_id: #{chat_id}")
@@ -65,9 +67,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle the /challenge command.
-  
+
   Starts a new challenge for the user.
   """
+  @spec handle({:command, String.t(), any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:command, "challenge", _msg}, context) do
     chat_id = get_chat_id(context)
     Logger.info("Received /challenge command from chat_id: #{chat_id}")
@@ -84,9 +87,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle unknown commands.
-  
+
   Provides a helpful response for unrecognized commands.
   """
+  @spec handle({:command, String.t(), any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:command, unknown_cmd, _msg}, context) do
     chat_id = get_chat_id(context)
     Logger.warning("Received unknown command: /#{unknown_cmd} from chat_id: #{chat_id}")
@@ -102,9 +106,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle regular text messages.
-  
+
   Processes non-command text messages from users.
   """
+  @spec handle({:text, String.t(), any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:text, text, _msg}, context) do
     chat_id = get_chat_id(context)
     Logger.debug("Received text message: '#{text}' from chat_id: #{chat_id}")
@@ -121,25 +126,33 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle callback queries from inline keyboards.
-  
+
   Processes button presses from inline keyboards.
   """
+  @spec handle({:callback_query, map()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:callback_query, %{data: data} = query}, context) do
     Logger.info("Received callback query with data: #{data}")
-    
+
     # Acknowledge the callback query to remove loading state
-    ExGram.answer_callback_query(query.id, text: "Processing...")
-    
+    case ExGram.answer_callback_query(query.id, text: "Processing...") do
+      {:ok, _result} ->
+        Logger.debug("Callback query #{query.id} acknowledged successfully")
+
+      {:error, reason} ->
+        Logger.warning("Failed to acknowledge callback query #{query.id}: #{inspect(reason)}")
+    end
+
     # TODO: Implement callback handling logic based on data
     answer(context, "Button pressed: #{data}")
   end
 
   @doc """
   Fallback handler for all other update types.
-  
+
   This ensures we gracefully handle any update type we haven't
   specifically implemented.
   """
+  @spec handle({:update, any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:update, update}, context) do
     Logger.debug("Received unhandled update type: #{inspect(update)}")
     
@@ -150,9 +163,10 @@ defmodule AutonomousOpponent.Bot do
 
   @doc """
   Handle errors that occur during message processing.
-  
+
   This ensures the bot continues running even if errors occur.
   """
+  @spec handle({:error, any()}, ExGram.Cnt.t()) :: ExGram.Cnt.t()
   def handle({:error, error}, context) do
     Logger.error("Error occurred: #{inspect(error)}")
     
@@ -161,6 +175,7 @@ defmodule AutonomousOpponent.Bot do
   end
 
   # Helper function to extract chat_id from context
+  @spec get_chat_id(ExGram.Cnt.t()) :: integer() | nil
   defp get_chat_id(context) do
     case context do
       %{chat: %{id: id}} -> id

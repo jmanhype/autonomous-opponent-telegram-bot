@@ -13,12 +13,27 @@ defmodule AutonomousOpponent.Application do
   @impl true
   def start(_type, _args) do
     Logger.info("Starting Autonomous Opponent application...")
-    
+
+    # Validate bot token is present before starting
+    bot_token = System.get_env("TELEGRAM_BOT_TOKEN")
+
+    unless bot_token do
+      Logger.error("TELEGRAM_BOT_TOKEN environment variable is not set!")
+      raise """
+      Missing required environment variable: TELEGRAM_BOT_TOKEN
+
+      Please set your Telegram bot token:
+        export TELEGRAM_BOT_TOKEN="your-bot-token-here"
+
+      You can get a bot token by talking to @BotFather on Telegram.
+      """
+    end
+
     bot_config = [
       method: :polling,
-      token: System.get_env("TELEGRAM_BOT_TOKEN")
+      token: bot_token
     ]
-    
+
     children = [
       # ExGram registry must start before the bot
       ExGram,
